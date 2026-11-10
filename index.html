@@ -517,8 +517,9 @@ function ytError(){
  Y.errs=(Y.errs||0)+1;
  if(Y.errs<4&&R.queue.length>1)setTimeout(function(){next(false)},900);
 }
+function lowQ(){if(S.npMode==='video')return;try{Y.p.setPlaybackQuality('tiny')}catch(x){}}
 function ytState(e){
- Y.state=e.data;if(e.data===1)Y.errs=0;
+ Y.state=e.data;if(e.data===1){Y.errs=0;lowQ()}
  if(e.data===0)next(true);
  refreshState();
 }
@@ -526,7 +527,7 @@ function playYT(t){
  $('#ytbox').hidden=false;
  return loadYT().then(function(){
   if(!Y.p){
-   Y.p=new YT.Player('ytplayer',{width:'100%',height:'100%',videoId:t.vid,playerVars:{playsinline:1,rel:0,autoplay:1},events:{onReady:function(e){try{e.target.playVideo()}catch(x){}},onStateChange:ytState,onError:ytError}});
+   Y.p=new YT.Player('ytplayer',{width:'100%',height:'100%',videoId:t.vid,playerVars:{playsinline:1,rel:0,autoplay:1,vq:'tiny'},events:{onReady:function(e){try{e.target.playVideo()}catch(x){}},onStateChange:ytState,onError:ytError}});
    Y.timer=setInterval(tick,500);
   }else{Y.p.loadVideoById(t.vid)}
  }).catch(function(){toast('Impossible de charger le lecteur YouTube')});
