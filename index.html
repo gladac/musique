@@ -181,7 +181,7 @@ h2.sec{font-size:22px;font-weight:700;letter-spacing:-.01em;margin:22px 0 10px}
   <button data-act="next" aria-label="Suivant" id="b-next"></button>
   <button class="tog" id="b-rep" data-act="rep" aria-label="Répéter"></button>
  </div>
- <div class="more"><button class="pill" data-act="eq" id="b-eq"></button><button class="pill" data-act="addpl" id="b-addpl"></button><button class="pill" data-act="mix" id="b-queue"></button><button class="pill" data-act="blk" id="b-blk"></button></div>
+ <div class="more"><button class="pill" data-act="eq" id="b-eq"></button><button class="pill" data-act="mix" id="b-queue"></button><button class="pill" data-act="blk" id="b-blk"></button></div>
  <div class="ytbox" id="ytbox" hidden><div id="ytplayer"></div></div>
 </section>
 <div class="blk" id="blk" hidden></div>
@@ -351,7 +351,7 @@ function renderMini(){
 }
 function initNP(){
  $('#b-shuf').innerHTML=ic('shuffle');$('#b-prev').innerHTML=ic('prev',true);$('#b-next').innerHTML=ic('next',true);
- $('#b-eq').innerHTML=ic('eq')+'Égaliseur';$('#b-addpl').innerHTML=ic('plus')+'Playlist';$('#b-queue').innerHTML=ic('mix')+'Mix';$('#b-blk').innerHTML=ic('moon')+'Écran noir';
+ $('#b-eq').innerHTML=ic('eq')+'Égaliseur';$('#b-queue').innerHTML=ic('mix')+'Mix';$('#b-blk').innerHTML=ic('moon')+'Écran noir';
 }
 function renderNP(){
  var t=curT();if(!t)return;
@@ -434,6 +434,8 @@ function tick(){
  if(!R.seeking&&d)$('#seek').value=Math.round(c/d*1000);
  $('#tcur').textContent=fmt(c);$('#tdur').textContent=fmt(d);
  adCheck();
+ var ct=curT();
+ if(ct&&ct.src==='yt'&&S.repeat===2&&!R.ad&&Y.state===1&&d>5&&c>=d-0.7&&ytReadyP()){try{Y.p.seekTo(0,true)}catch(e){}}
  var mp=$('#mprogi');if(mp)mp.style.width=(d?Math.min(100,c/d*100):0)+'%';
 }
 var ctx=null,filters=[],bass=null,graphOK=false;
@@ -463,7 +465,7 @@ function playAt(i){
   for(var j=i+1;j<R.queue.length;j++){var tj=track(R.queue[j]);if(tj&&tj.src==='local'){playAt(j);return}}
   toast('Mode économie de données : seuls tes fichiers sont lus');return;
  }
- R.qi=i;
+ R.qi=i;R.nq=0;
  if(t.src==='yt'){
   A.pause();Y.state=-1;R.ad=false;blkHide();
   playYT(t);render();setSession(t);return;
@@ -768,7 +770,7 @@ function mixSheet(){
  fetchMix(t).then(function(list){
   R.mix=list.map(toTrack);
   if(!R.mix.length){sheet('<h2>Mix</h2><div class="note">Aucune suggestion trouvée.</div>');return}
-  sheet('<h2>Mix · musiques similaires</h2>'+R.mix.map(function(x,k){return '<button class="it" data-act="mixplay" data-i="'+k+'">'+artHTML(x)+'<span style="flex:1;min-width:0"><div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(x.title)+'</div><div style="color:var(--mute);font-size:14px">'+esc(x.artist)+'</div></span></button>'}).join(''));
+  sheet('<h2>Mix · musiques similaires</h2>'+R.mix.map(function(x,k){return '<div class="it" style="padding:0"><button data-act="mixplay" data-i="'+k+'" style="flex:1;min-width:0;display:flex;align-items:center;gap:12px;text-align:left;min-height:48px">'+artHTML(x)+'<span style="flex:1;min-width:0"><div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(x.title)+'</div><div style="color:var(--mute);font-size:14px">'+esc(x.artist)+'</div></span></button><button data-act="mixnext" data-i="'+k+'" aria-label="Lire ensuite" style="flex:none;color:var(--accent);font-size:13px;font-weight:600;padding:10px 6px;min-height:44px">Lire ensuite</button></div>'}).join(''));
  }).catch(function(o){sheet('<h2>Mix</h2><div class="err">'+esc(o&&o.j?apiErr(o):'Mix indisponible.')+'</div>')});
 }
 function npMoreSheet(){
@@ -932,6 +934,7 @@ document.addEventListener('click',function(e){
  else if(a==='npmore'){npMoreSheet()}
  else if(a==='mix'){mixSheet()}
  else if(a==='blk'){blkShow()}
+ else if(a==='mixnext'){var mx=R.mix[+el.dataset.i];if(mx&&R.qi>-1){var pos=R.qi+1+(R.nq||0);R.queue.splice(pos,0,mx.id);R.orig.push(mx.id);R.nq=(R.nq||0)+1;toast('Lu ensuite : « '+mx.title+' »')}}
  else if(a==='mixplay'){setQueue(R.mix.map(function(x){return x.id}),+el.dataset.i,false);closeSheet()}
  else if(a==='artist'){var cu=curT();if(cu){closeSheet();$('#np').classList.remove('show');openArtist(mainArtist(cu.artist))}}
  else if(a==='artistof'){var at=track(id);closeSheet();if(at)openArtist(mainArtist(at.artist))}
